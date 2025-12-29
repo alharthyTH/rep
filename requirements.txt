@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+twilio
+supabase
+google-cloud-pubsub
+python-dotenv
+requests
+pydantic
+pydantic-settings
+google-api-python-client
+google-auth
+openai
+python-multipart
