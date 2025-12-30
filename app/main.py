@@ -104,6 +104,7 @@ async def regenerate_draft(phone_number: str):
         pending_review["star_rating"], 
         client["language_preference"], 
         client.get("offer_policy", ""), 
+        client["phone_number"],
         is_retry=True
     )
 
@@ -115,15 +116,33 @@ async def regenerate_draft(phone_number: str):
         stats = get_daily_stats(client_id)
         current_date = datetime.now().strftime("%d %b")
         
-        whatsapp_body = (
-            f"📊 Dashboard • {current_date}\n"
-            f"🔴 Pending: {stats['pending']} | ✅ Posted: {stats['posted']}\n\n"
-            f"⭐ New {pending_review['star_rating']} Review\n"
-            f"👤 Customer\n"
-            f"\"{pending_review['review_text']}\"\n\n"
-            f"🤖 Proposed Reply: \"{new_draft}\"\n\n"
-            f"👇 Action: 1 : Approve 2 : 🎲 Regenerate"
-        )
+        reviewer_name = pending_review.get("reviewer_name", "Customer")
+        star_rating = pending_review["star_rating"]
+        review_text = pending_review["review_text"]
+
+        if client["language_preference"] == "ar-om":
+            whatsapp_body = (
+                f"📊 *لوحة التحكم • {current_date}*\n"
+                f"🔴 قيد الانتظار: {stats['pending']} | ✅ تم النشر: {stats['posted']}\n"
+                f"    ⭐ *تقييم جديد ({star_rating} نجوم)*\n"
+                f"    👤 *{reviewer_name}*\n"
+                f"    \"{review_text}\"\n"
+                f"    🤖 *الرد المقترح:*\n"
+                f"    \"{new_draft}\"\n"
+                f"    👇 *الإجراء:*\n"
+                f"    1 : ✅ اعتماد ونشر\n"
+                f"    2 : 🎲 صياغة جديدة"
+            )
+        else:
+            whatsapp_body = (
+                f"📊 Dashboard • {current_date}\n"
+                f"🔴 Pending: {stats['pending']} | ✅ Posted: {stats['posted']}\n\n"
+                f"⭐ New {star_rating} Review\n"
+                f"👤 {reviewer_name}\n"
+                f"\"{review_text}\"\n\n"
+                f"🤖 Proposed Reply: \"{new_draft}\"\n\n"
+                f"👇 Action: 1 : Approve 2 : 🎲 Regenerate"
+            )
         send_whatsapp_message(phone_number, whatsapp_body)
         return True
     return False
@@ -222,7 +241,7 @@ async def google_pubsub_webhook(request: Request):
         offer_policy = client.get("offer_policy", "STRICT - NO OFFERS")
 
         # 2. Generate AI Draft
-        ai_reply = generate_review_reply(review_text, star_rating, client_lang, offer_policy)
+        ai_reply = generate_review_reply(review_text, star_rating, client_lang, offer_policy, client_phone)
         if not ai_reply:
             return {"status": "AI generation failed"}
 
@@ -244,16 +263,29 @@ async def google_pubsub_webhook(request: Request):
         stats = get_daily_stats(client_id)
         current_date = datetime.now().strftime("%d %b")
         
-        # New format mockup: '📊 Dashboard • {date} 🔴 Pending: {pending} | ✅ Posted: {posted} ...'
-        whatsapp_body = (
-            f"📊 Dashboard • {current_date}\n"
-            f"🔴 Pending: {stats['pending']} | ✅ Posted: {stats['posted']}\n\n"
-            f"⭐ New {star_rating} Review\n"
-            f"👤 {reviewer_name}\n"
-            f"\"{review_text}\"\n\n"
-            f"🤖 Proposed Reply: \"{draft_text}\"\n\n"
-            f"👇 Action: 1 : Approve 2 : 🎲 Regenerate"
-        )
+        if client_lang == "ar-om":
+            whatsapp_body = (
+                f"📊 *لوحة التحكم • {current_date}*\n"
+                f"🔴 قيد الانتظار: {stats['pending']} | ✅ تم النشر: {stats['posted']}\n"
+                f"    ⭐ *تقييم جديد ({star_rating} نجوم)*\n"
+                f"    👤 *{reviewer_name}*\n"
+                f"    \"{review_text}\"\n"
+                f"    🤖 *الرد المقترح:*\n"
+                f"    \"{draft_text}\"\n"
+                f"    👇 *الإجراء:*\n"
+                f"    1 : ✅ اعتماد ونشر\n"
+                f"    2 : 🎲 صياغة جديدة"
+            )
+        else:
+            whatsapp_body = (
+                f"📊 Dashboard • {current_date}\n"
+                f"🔴 Pending: {stats['pending']} | ✅ Posted: {stats['posted']}\n\n"
+                f"⭐ New {star_rating} Review\n"
+                f"👤 {reviewer_name}\n"
+                f"\"{review_text}\"\n\n"
+                f"🤖 Proposed Reply: \"{draft_text}\"\n\n"
+                f"👇 Action: 1 : Approve 2 : 🎲 Regenerate"
+            )
         send_whatsapp_message(client_phone, whatsapp_body)
 
     except Exception as e:

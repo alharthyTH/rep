@@ -1,0 +1,12 @@
+"I need to perform a major upgrade to the AI logic and the WhatsApp Dashboard UI.1. Update generate_review_reply (The Brain):Dynamic Language & Tone:Input: Pass the review_text into the System Prompt.Language Rule: Detect the language of the review_text.If Arabic or Mixed (Arabic/English) $\rightarrow$ Reply in Omani Arabic.If English $\rightarrow$ Reply in English.Relevance Rule: Do not be generic. If the user mentions a specific item (e.g., 'Tea', 'Staff', 'Cleanliness'), you MUST mention it in your reply. Mirror their topic.Strict Safety Policy (Negative Constraints):FORBIDDEN: Never offer 'compensation' (تعويض), 'refunds' (استرجاع), 'free items', or say 'we will make it up to you'.ALLOWED: For complaints, only promise to listen and investigate.Arabic Phrase: 'يرجى التواصل معنا لمتابعة الموضوع ومراجعة التفاصيل' (Please contact us to follow up and review details).English Phrase: 'Please contact us directly so we can look into this matter.'Contact Info: Always include the client's phone number in negative replies.2. Update send_whatsapp_dashboard (The UI):Localization Logic: Check the client's language_preference (from the DB).If 'ar-om' (Arabic):Use this template:Plaintext📊 *لوحة التحكم • {date}*
+🔴 قيد الانتظار: {pending} | ✅ تم النشر: {posted}
+    ⭐ *تقييم جديد ({star} نجوم)*
+    👤 *{reviewer_name}*
+    "{review_text}"
+    🤖 *الرد المقترح:*
+    "{draft_reply}"
+    👇 *الإجراء:*
+    1 : ✅ اعتماد ونشر
+    2 : 🎲 صياغة جديدة
+    ```
+If 'en' (English):Keep the existing English template ('Dashboard', 'Pending', etc.).3. Update regenerate_draft:Ensure the 'Retry/Regenerate' function also follows the strictly defined Language and Safety rules above."
